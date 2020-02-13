@@ -4,8 +4,10 @@ Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
 Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
-
+from app.forms import ContactForm 
 from app import app
+from app import mail
+from flask_mail import Message 
 from flask import render_template, request, redirect, url_for, flash
 
 
@@ -24,6 +26,28 @@ def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
 
+# @app.route('/contact')
+# def contact():
+#     """Render the website's contact page."""
+#     return render_template('contact.html')
+
+@app.route('/contact', methods=["GET", "POST"])
+def contact():
+    form= ContactForm()
+    if request.method == 'POST' and form.validate_on_submit(): 
+        name = request.form['name']
+        email = request.form['email']
+        subject=request.form['subject']
+        message=request.form['message']
+        msg = Message(subject, sender=(name,email),recipients=["campbellmonique48@yahoo.com"])
+        msg.body = message
+        mail.send(msg) 
+        flash('Email successfully sent!')
+        return redirect(url_for('home'))
+    else:
+        return render_template('contact.html', form=form) 
+
+
 
 ###
 # The functions below should be applicable to all Flask apps.
@@ -35,9 +59,8 @@ def flash_errors(form):
     for field, errors in form.errors.items():
         for error in errors:
             flash(u"Error in the %s field - %s" % (
-                getattr(form, field).label.text,
-                error
-            ), 'danger')
+            getattr(form, field).label.text,
+                error), 'danger')
 
 
 @app.route('/<file_name>.txt')
